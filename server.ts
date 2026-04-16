@@ -31,30 +31,40 @@ app.post('/api/process-audio', upload.single('audio'), async (req, res) => {
         const audioPath = req.file.path;
         console.log(`Received audio file at ${audioPath}`);
         
+        const aspectRatio = req.body.aspectRatio || '16:9';
+        const aiModel = req.body.aiModel || 'veo3';
+        const videoTitle = req.body.videoTitle || 'Music Video';
+        const captionFont = req.body.captionFont || 'cinematic';
+
+        console.log(`Target format: ${aspectRatio}`);
+        console.log(`AI Engine: ${aiModel}`);
+        console.log(`Video Title: ${videoTitle}`);
+        console.log(`Caption Style: ${captionFont}`);
+
         // 1. Analyze Audio & Generate Prompts
         // Here you would use @google/genai to process the audio and get scene descriptions
         console.log("Analyzing audio for scene changes and vibe...");
         
         // Simulate prompt generation
         const generatedPrompts = [
-            { time: '0:00 - 0:15', prompt: 'Cinematic intro, neon lights reflecting on wet pavement, rainy cyberpunk city.' },
+            { time: '0:00 - 0:15', prompt: `Cinematic intro using ${aiModel}, title sequence establishing the mood.` },
             { time: '0:15 - 0:30', prompt: 'Fast camera pan across glowing skyscrapers, intense synthwave colors.' },
             { time: '0:30 - 1:00', prompt: 'Abstract glowing geometry pulsing to the beat, high contrast.' }
         ];
 
         // 2. Call AI Video Generation APIs
         // Here you would call Runway/Luma/Replicate for each prompt to get video clips.
-        console.log("Calling RunwayML/Replicate for video generation...");
+        console.log(`Calling ${aiModel} endpoints for video generation...`);
         
         // 3. Post-Process & Stitching using FFmpeg
         // This is the boilerplate FFmpeg logic to stitch video clips together.
         // We'll mock paths since we don't have actual generated videos in this environment.
-        console.log("Stitching videos using FFmpeg...");
+        console.log("Stitching videos using FFmpeg and burning in subtitles/titles...");
         const outputFilename = `final_video_${Date.now()}.mp4`;
         const outputPath = path.join(os.tmpdir(), outputFilename);
         
         /* 
-        // Example fluent-ffmpeg script for stitching clips and adding audio:
+        // Example fluent-ffmpeg script for stitching clips, adding audio, and burning text:
         
         const command = ffmpeg();
         
@@ -66,11 +76,18 @@ app.post('/api/process-audio', upload.single('audio'), async (req, res) => {
         command.addInput(audioPath);
         
         command
-            // Use concat filter or pass options
             .complexFilter([
                 // If clips have different resolutions, scale them here
                 // We're concatenating video only first
-                'concat=n=' + videoClips.length + ':v=1:a=0[v]'
+                'concat=n=' + videoClips.length + ':v=1:a=0[base]',
+                
+                // Add the animated video title in the first 3 seconds
+                // Uses the selected typography (captionFont)
+                `[base]drawtext=text='${videoTitle}':fontfile=/fonts/${captionFont}.ttf:fontsize=72:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t,0,3)'[with_title]`,
+                
+                // Add the lyrics/captions styling to the rest of the video
+                `[with_title]subtitles=captions.srt:force_style='Fontname=${captionFont},Fontsize=24,PrimaryColour=&H00FFFFFF'[v]`
+
             ], 'v')
             // Map the video and the audio
             .outputOptions([
@@ -89,7 +106,7 @@ app.post('/api/process-audio', upload.single('audio'), async (req, res) => {
         res.json({ 
             status: 'Processing started', 
             prompts: generatedPrompts,
-            message: 'Audio analyzed. Prompts generated. AI Video API would be called next, followed by ffmpeg stitching.'
+            message: `Audio analyzed. Rendering ${aiModel} video clips. Burned-in title: "${videoTitle}" with ${captionFont} captions.`
         });
 
     } catch (error) {

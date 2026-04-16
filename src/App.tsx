@@ -1,12 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { UploadCloud, Music, Film, Scissors, CheckCircle, Smartphone, MonitorPlay, Loader2, Sparkles } from 'lucide-react';
+import { UploadCloud, Music, Film, CheckCircle, Smartphone, MonitorPlay, Loader2, Sparkles, Activity } from 'lucide-react';
 
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
   const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('16:9');
   const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'done'>('idle');
   const [prompts, setPrompts] = useState<{ time: string, prompt: string }[]>([]);
+  const [aiModel, setAiModel] = useState('veo3');
+  const [videoTitle, setVideoTitle] = useState('');
+  const [captionFont, setCaptionFont] = useState('cinematic');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,9 +37,11 @@ export default function App() {
     const formData = new FormData();
     formData.append('audio', file);
     formData.append('aspectRatio', aspectRatio);
+    formData.append('aiModel', aiModel);
+    formData.append('videoTitle', videoTitle);
+    formData.append('captionFont', captionFont);
 
     try {
-      // Small simulated delay for upload UI
       await new Promise(r => setTimeout(r, 1000));
       setStatus('processing');
 
@@ -49,7 +54,6 @@ export default function App() {
       
       const data = await res.json();
       
-      // Simulate the long processing time step-by-step
       setTimeout(() => {
         setPrompts(data.prompts || []);
         setStatus('done');
@@ -64,211 +68,230 @@ export default function App() {
 
   return (
     <>
-      <div className="bg-atmosphere" />
-      
-      <div className="min-h-screen p-6 md:p-12 flex flex-col max-w-7xl mx-auto">
-        <header className="flex justify-between items-center mb-16">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[color:var(--color-primary-pill)] flex items-center justify-center">
-              <Sparkles className="text-white w-5 h-5" />
+      <div className="flex flex-col min-h-screen">
+        
+        {/* Navigation - Matches Theme */}
+        <nav className="h-[80px] px-10 flex items-center justify-between">
+          <div className="text-[20px] font-bold tracking-[-0.5px] flex items-center gap-[10px]">
+             <div className="w-8 h-8 bg-[var(--color-primary-pill)] rounded-lg flex items-center justify-center">
+              <Sparkles className="text-white w-4 h-4" />
             </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight glow-text">LuminaVM</h1>
+            LuminaVM
           </div>
-          <nav className="hidden md:flex gap-4">
+          <div className="flex gap-3">
             <button className="pill pill-secondary">Dashboard</button>
-            <button className="pill pill-secondary">Gallery</button>
-          </nav>
-        </header>
+            <button className="pill pill-primary">Gallery</button>
+          </div>
+        </nav>
 
-        <main className="flex-1 grid lg:grid-cols-2 gap-12 items-center">
+        {/* Main Content Layout - Grid 280px 1fr */}
+        <main className="flex-1 grid md:grid-cols-[280px_1fr] gap-6 px-10 pb-10 items-start">
           
-          {/* Left Column - Hero Text & Explainers */}
-          <div className="z-10 flex flex-col gap-8">
-            <div>
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 pill pill-secondary py-1 mb-6"
-              >
-                <div className="w-2 h-2 rounded-full bg-[var(--color-primary-pill)] animate-pulse" />
-                <span className="text-xs uppercase tracking-widest text-[var(--color-primary-pill)] font-medium">V1.0 Engine Live</span>
-              </motion.div>
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="font-display text-5xl md:text-7xl font-bold leading-tight mb-6"
-              >
-                Music to Video <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary-pill)] to-[var(--color-text-dim)]">
-                  in Seconds.
-                </span>
-              </motion.h2>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-gray-400 text-lg md:text-xl max-w-lg font-light leading-relaxed"
-              >
-                Upload your track. Our AI analyzes the beat, generates cinematic scenes, and stitches them into a perfect 4K music video.
-              </motion.p>
+          {/* Sidebar Area */}
+          <aside className="flex flex-col gap-5">
+            
+            <div className="glass-panel p-5">
+              <div className="text-[12px] uppercase tracking-[1px] text-[var(--color-text-dim)] mb-4 font-bold">Output Format</div>
+              <div className="grid grid-cols-2 gap-2 bg-black/20 p-1 rounded-xl">
+                <div 
+                  onClick={() => setAspectRatio('16:9')}
+                  className={`p-2 text-center rounded-lg text-[13px] cursor-pointer transition-colors ${
+                    aspectRatio === '16:9' ? 'bg-[var(--color-secondary-pill)] text-white' : 'text-[var(--color-text-dim)] hover:text-white'
+                  }`}
+                >
+                  16:9
+                </div>
+                <div 
+                  onClick={() => setAspectRatio('9:16')}
+                  className={`p-2 text-center rounded-lg text-[13px] cursor-pointer transition-colors ${
+                    aspectRatio === '9:16' ? 'bg-[var(--color-secondary-pill)] text-white' : 'text-[var(--color-text-dim)] hover:text-white'
+                  }`}
+                >
+                  9:16
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="text-[12px] uppercase tracking-[1px] text-[var(--color-text-dim)] mb-4 font-bold">AI Engine</div>
+                <div className="grid grid-cols-2 gap-2 bg-black/20 p-1 rounded-xl">
+                  {/* Selectable Models */}
+                  {[
+                    { id: 'veo3', label: 'Veo 3' },
+                    { id: 'kling', label: 'Kling AI' },
+                    { id: 'luma', label: 'Luma V1.5' },
+                    { id: 'runway', label: 'Runway Gen-3' }
+                  ].map(model => (
+                    <div 
+                      key={model.id}
+                      onClick={() => setAiModel(model.id)}
+                      className={`p-2 text-center rounded-lg text-[12px] font-medium cursor-pointer transition-colors ${
+                        aiModel === model.id ? 'bg-[var(--color-secondary-pill)] text-white' : 'text-[var(--color-text-dim)] hover:text-white'
+                      }`}
+                    >
+                      {model.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="grid grid-cols-2 gap-4 max-w-md"
+            <div className="glass-panel p-5">
+               <div className="text-[12px] uppercase tracking-[1px] text-[var(--color-text-dim)] mb-4 font-bold">Typography & Captions</div>
+               
+               <div className="mb-4">
+                 <label className="text-[11px] text-[var(--color-text-dim)] block mb-2">Intro Title</label>
+                 <input 
+                   type="text" 
+                   placeholder="e.g. Midnight Drive..." 
+                   value={videoTitle} 
+                   onChange={e => setVideoTitle(e.target.value)} 
+                   className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white text-[13px] outline-none focus:border-[var(--color-primary-pill)] transition-colors placeholder:text-white/30" 
+                 />
+               </div>
+
+               <div>
+                 <label className="text-[11px] text-[var(--color-text-dim)] block mb-2">Caption Style</label>
+                 <div className="grid grid-cols-2 gap-2">
+                   <div onClick={() => setCaptionFont('cinematic')} className={`p-2 border rounded-lg text-[13px] cursor-pointer text-center font-['Playfair_Display'] ${captionFont === 'cinematic' ? 'border-[var(--color-primary-pill)] bg-[var(--color-primary-pill)]/20 text-white' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>Cinematic</div>
+                   <div onClick={() => setCaptionFont('bold')} className={`p-2 border rounded-lg text-[13px] uppercase tracking-tighter cursor-pointer text-center font-['Anton'] ${captionFont === 'bold' ? 'border-[var(--color-primary-pill)] bg-[var(--color-primary-pill)]/20 text-white' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>Loud</div>
+                   <div onClick={() => setCaptionFont('neon')} className={`p-2 border rounded-lg text-[13px] cursor-pointer text-center font-['Space_Grotesk'] ${captionFont === 'neon' ? 'border-[var(--color-primary-pill)] bg-[var(--color-primary-pill)]/20 text-white drop-shadow-[0_0_5px_var(--color-primary-pill)]' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>Neon Glow</div>
+                   <div onClick={() => setCaptionFont('minimal')} className={`p-2 border rounded-lg text-[13px] cursor-pointer text-center font-['JetBrains_Mono'] ${captionFont === 'minimal' ? 'border-[var(--color-primary-pill)] bg-[var(--color-primary-pill)]/20 text-white' : 'border-white/10 text-gray-400 hover:border-white/30'}`}>Minimal</div>
+                 </div>
+               </div>
+            </div>
+          </aside>
+
+          {/* Workspace Area */}
+          <div className="flex flex-col gap-6 h-full">
+            
+            {/* Upload Area */}
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className={`flex-1 min-h-[200px] border-2 border-dashed rounded-[24px] flex flex-col items-center justify-center p-8 text-center cursor-pointer transition-all duration-300 ${
+                file ? 'border-[var(--color-primary-pill)]/50 bg-[var(--color-primary-pill)]/10' : 'border-[var(--color-glass-border)] bg-white/[0.02] hover:bg-white/[0.04]'
+              }`}
             >
-              <div className="flex flex-col gap-2">
-                <Music className="w-5 h-5 text-[var(--color-primary-pill)]" />
-                <span className="text-sm text-gray-300">Audio Analysis</span>
-                <p className="text-xs text-gray-500">Detects drops, tempo, and vibe to sync visuals.</p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Film className="w-5 h-5 text-[var(--color-text-dim)]" />
-                <span className="text-sm text-gray-300">Generative AI</span>
-                <p className="text-xs text-gray-500">Creates breathtaking clips via Runway/Luma.</p>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Right Column - The App UI */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="z-10"
-          >
-            <div className="glass-panel p-8 rounded-3xl relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-primary-pill)] opacity-50" />
-              
-              <h3 className="font-display text-xl font-semibold mb-6 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">1</span>
-                Drop Audio Track
-              </h3>
-
-              <div 
-                className={`border-2 border-dashed rounded-[24px] p-8 mb-8 flex flex-col items-center justify-center text-center transition-all ${
-                  file ? 'border-[var(--color-primary-pill)] bg-[var(--color-primary-pill)]/10' : 'border-[var(--color-glass-border)] hover:border-white/20 bg-white/5'
-                }`}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input 
-                  type="file" 
-                  accept="audio/mp3, audio/wav" 
-                  className="hidden" 
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                />
-                
-                <AnimatePresence mode="wait">
-                  {!file ? (
-                    <motion.div 
-                      key="empty"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex flex-col items-center gap-4 cursor-pointer"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-                        <UploadCloud className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-200">Click or drag MP3/WAV here</p>
-                        <p className="text-xs text-gray-500 mt-1">Max duration: 3 minutes</p>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div 
-                      key="filled"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex flex-col items-center gap-4 cursor-pointer"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-[color:var(--color-primary-pill)]/20 flex items-center justify-center">
-                        <Music className="w-8 h-8 text-[color:var(--color-primary-pill)]" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{file.name}</p>
-                        <p className="text-xs text-gray-400 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <h3 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs">2</span>
-                Format
-              </h3>
-              
-              <div className="flex gap-4 mb-8">
-                <button 
-                  onClick={() => setAspectRatio('16:9')}
-                  className={`flex-1 pill flex flex-col items-center gap-2 ${aspectRatio === '16:9' ? 'pill-primary' : 'pill-secondary'}`}
-                >
-                  <MonitorPlay className={`w-6 h-6 ${aspectRatio === '16:9' ? 'text-white' : 'text-[var(--color-text-dim)]'}`} />
-                  <span className="text-sm font-medium">16:9 Landscape</span>
-                </button>
-                <button 
-                  onClick={() => setAspectRatio('9:16')}
-                  className={`flex-1 pill flex flex-col items-center gap-2 ${aspectRatio === '9:16' ? 'pill-primary' : 'pill-secondary'}`}
-                >
-                  <Smartphone className={`w-6 h-6 ${aspectRatio === '9:16' ? 'text-white' : 'text-[var(--color-text-dim)]'}`} />
-                  <span className="text-sm font-medium">9:16 Vertical</span>
-                </button>
-              </div>
-
-              <button 
-                onClick={startGeneration}
-                disabled={!file || status !== 'idle'}
-                className={`w-full py-4 text-lg flex flex-row items-center justify-center gap-2 transition-all ${
-                  !file ? 'pill pill-secondary opacity-50 cursor-not-allowed' : 
-                  'pill pill-primary hover:scale-[1.02]'
-                }`}
-              >
-                {status === 'idle' && (
-                  <>Generate Video <Sparkles className="w-5 h-5" /></>
-                )}
-                {status === 'uploading' && (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</>
-                )}
-                {status === 'processing' && (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Stitching AI Scenes...</>
-                )}
-                {status === 'done' && (
-                  <><CheckCircle className="w-5 h-5 text-green-500" /> Complete!</>
-                )}
-              </button>
-
-              <AnimatePresence>
-                {status === 'done' && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10"
-                  >
-                    <h4 className="text-sm font-medium mb-3 text-gray-300">Generation Log:</h4>
-                    <ul className="space-y-3">
-                      {prompts.map((p, i) => (
-                        <li key={i} className="text-xs text-gray-400 flex gap-3">
-                          <span className="text-[var(--color-primary-pill)] min-w-[70px] font-mono">{p.time}</span>
-                          <span>{p.prompt}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <button className="mt-4 w-full pill pill-primary py-2 text-sm text-white flex items-center justify-center gap-2">
-                       Download {aspectRatio} Render
-                    </button>
+              <input 
+                type="file" 
+                accept="audio/mp3, audio/wav" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+              <AnimatePresence mode="wait">
+                {!file ? (
+                  <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+                    <UploadCloud className="w-12 h-12 mb-4 opacity-50" />
+                    <h2 className="text-[18px] font-semibold mb-2">Drop your track here</h2>
+                    <p className="text-[13px] text-[var(--color-text-dim)]">MP3 or WAV up to 3 minutes</p>
+                  </motion.div>
+                ) : (
+                  <motion.div key="filled" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+                    <Activity className="w-12 h-12 mb-4 text-[var(--color-primary-pill)] animate-pulse" />
+                    <h2 className="text-[18px] font-semibold mb-2">{file.name}</h2>
+                    <p className="text-[13px] text-[var(--color-text-dim)]">{(file.size / 1024 / 1024).toFixed(2)} MB • Ready for processing</p>
+                    <button className="pill pill-secondary mt-6 border border-white/10" onClick={(e) => { e.stopPropagation(); setFile(null); }}>Change Audio</button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-          </motion.div>
+
+            {/* Generation Status Panel */}
+            <div className="glass-panel p-6">
+              <div className="flex justify-between mb-4">
+                <div>
+                  <h3 className="text-[16px] font-semibold mb-1">
+                    {status === 'idle' ? 'Ready to Generate' : status === 'uploading' ? 'Uploading Track...' : status === 'processing' ? 'Generating Visuals' : 'Generation Complete'}
+                  </h3>
+                  <p className="text-[12px] text-[var(--color-text-dim)]">
+                    {status === 'idle' ? 'Press generate to begin AI pipeline' : status === 'done' ? 'Your video is ready' : 'Processing scene sequences...'}
+                  </p>
+                </div>
+                {status !== 'idle' && status !== 'done' && (
+                  <div className="text-right">
+                    <span className="text-[16px] font-semibold block">{status === 'uploading' ? '15%' : '65%'}</span>
+                    <p className="text-[12px] text-[var(--color-text-dim)] animate-pulse">Running</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Bar Container */}
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-6 relative">
+                <motion.div 
+                  initial={{ width: '0%' }}
+                  animate={{ 
+                    width: status === 'idle' ? '0%' : status === 'uploading' ? '15%' : status === 'processing' ? '65%' : '100%',
+                  }}
+                  transition={{ duration: 0.5 }}
+                  className="h-full bg-[var(--color-primary-pill)] shadow-[0_0_15px_var(--color-primary-pill)]"
+                />
+              </div>
+
+              {/* Timeline Grid (Mocks rendering of scenes) */}
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-6">
+                 {Array.from({length: 6}).map((_, i) => {
+                    const isDone = status === 'done' || (status === 'processing' && i < 3);
+                    const isProcessing = status === 'processing' && i === 3;
+                    
+                    return (
+                        <div key={i} className={`aspect-video rounded-lg border text-[11px] flex items-center justify-center relative overflow-hidden transition-all duration-300 ${
+                            isDone ? 'bg-[#1a1a1a] border-[var(--color-primary-pill)] text-white' : 
+                            isProcessing ? 'border-[var(--color-primary-pill)] border-dashed text-[var(--color-text-dim)]' : 
+                            'bg-white/5 border-[var(--color-glass-border)] text-[var(--color-text-dim)]'
+                        }`}>
+                            Scene {String(i + 1).padStart(2, '0')}
+                            {isDone && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--color-primary-pill)]" />}
+                        </div>
+                    )
+                 })}
+              </div>
+
+               {/* Log out actual results beneath the timeline if done */}
+               <AnimatePresence>
+                {status === 'done' && prompts.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mb-6 p-4 rounded-xl bg-black/20"
+                  >
+                    <ul className="space-y-2">
+                      {prompts.map((p, i) => (
+                        <li key={i} className="text-[12px] flex gap-3 text-white">
+                          <span className="text-[var(--color-primary-pill)] min-w-[70px] font-mono">{p.time}</span>
+                          <span className="opacity-80">{p.prompt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-auto">
+                {status === 'idle' ? (
+                  <button 
+                    onClick={startGeneration}
+                    disabled={!file}
+                    className={`pill ${!file ? 'pill-secondary opacity-50' : 'pill-primary'}`}
+                  >
+                    Generate Video
+                  </button>
+                ) : status === 'done' ? (
+                   <>
+                    <button className="pill pill-secondary font-semibold" onClick={() => setStatus('idle')}>Reset</button>
+                    <button className="pill pill-primary font-semibold">Export MP4</button>
+                   </>
+                ) : (
+                  <button className="pill pill-primary opacity-50 flex items-center gap-2 cursor-wait">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Processing
+                  </button>
+                )}
+              </div>
+
+            </div>
+          </div>
         </main>
       </div>
     </>
